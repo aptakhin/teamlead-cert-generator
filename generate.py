@@ -12,13 +12,6 @@ GOOGLE_CHROME_PATH = ('/Applications/Google\ Chrome.app/Contents/MacOS/'
     'Google\ Chrome')
 
 
-# Can't make album, text around printed area :()
-def export_svg_pdf(svg_path: Path, pdf_output_path: Path):
-    subprocess.check_call([f'{GOOGLE_CHROME_PATH} --headless --print-to-pdf='
-        f'{pdf_output_path} --window-size=1480,1048 {svg_path}'], shell=True)
-    # os.rename('screenshot.png', png_output_path)
-
-
 # Works ok now
 def export_svg_png(svg_path: Path, png_output_path: Path):
     subprocess.check_call([
@@ -31,10 +24,11 @@ def export_svg_png(svg_path: Path, png_output_path: Path):
 
 def generate_cert(
     *, name: str, svg_template_path: Path, svg_output_path: Path, 
-    pdf_output_path: Path, png_output_path: Path,
+    png_output_path: Path,
     ):
     subprocess.check_call([f'sed "s/PLACE_NAME_HERE/{name}/" ' 
-        f'{svg_template_path} > {svg_output_path}'], shell=True)
+        f'{svg_template_path} > {svg_output_path}',
+        ], shell=True)
 
     export_svg_png(svg_path=svg_output_path, png_output_path=png_output_path)
 
@@ -55,13 +49,11 @@ def generate_list(task: GenerateCertTask, generated_path: Path):
                 continue
             items.append(stripped_line)
 
-    output_path = generated_path / task.output_slug
-
     output_path_png = generated_path / (task.output_slug + '-png')
-    output_path_png.mkdir(parents=True)
+    output_path_png.mkdir(parents=True, exist_ok=True)
 
     output_path_svg = generated_path / (task.output_slug + '-svg')
-    output_path_svg.mkdir(parents=True)
+    output_path_svg.mkdir(parents=True, exist_ok=True)
 
     for counter, name in enumerate(items, start=1):
         make_base_name = name.replace(' ', '_').lower()
@@ -69,8 +61,7 @@ def generate_list(task: GenerateCertTask, generated_path: Path):
         generate_cert(
             name=name, 
             svg_template_path=task.template_file_path,
-            svg_output_path=output_path_svg / f'{make_base_name}.svg', 
-            pdf_output_path=output_path / f'{make_base_name}.pdf',
+            svg_output_path=output_path_svg / f'{make_base_name}.svg',
             png_output_path=output_path_png / f'{make_base_name}.png',
         )
 
@@ -100,7 +91,7 @@ def generate_certs():
     ]
 
     shutil.rmtree(generated_path, ignore_errors=True)
-    generated_path.mkdir(parents=True)
+    generated_path.mkdir(parents=True, exist_ok=True)
     for task in tasks:
         generate_list(task, generated_path=generated_path)
         
